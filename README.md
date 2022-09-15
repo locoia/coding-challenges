@@ -34,3 +34,30 @@ If you feel you are not able to implement everything on time, please, try instea
     - How can we deploy the application in a cloud environment?
     - How can we be sure the application is alive and works as expected when deployed into a cloud environment?
     - Any other topics you may find interesting and/or important to cover
+
+
+## Notes from Caleb:
+
+- Create VENV:
+   python3.9 -m venv gist
+
+- Activate VENV
+   source gist/bin/activate
+
+- Install:
+   pip install poertry
+   poetry install
+
+- Lint:
+    black src/
+    flake8 src/
+    isort src/
+     
+- Run Tests:
+  - pytest -s -vv test/
+
+- Build and Run
+ -./build.sh (linux or osx)
+
+
+
