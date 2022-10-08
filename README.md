@@ -32,3 +32,16 @@ Please don't use a github API client (i.e. using a basic HTTP library like reque
     - How can we deploy the application in a cloud environment?
     - How can we be sure the application is alive and works as expected when deployed into a cloud environment?
     - Any other topics you may find interesting and/or important to cover
+
+## Run Dockerfile:
+* First build it with
+```docker build -t gistapi/gistapi:1.0 . ```
+* Then run it with:
+```docker run --name gistapi -p 5000:5000 gistapi/gistapi:1.0``` 
+* For a detached mode use ```-d``` before port flag
+
+Application is available at http://0.0.0.0:5000/api/v1/search 
+
+## Formatting and linting
+* There is a pre-commit hook within the repository that will run on every commit to verify and format the code
+* I used ```isort```, ```black```, and ```autoflake``` for pre commit code validations

@@ -8,11 +8,12 @@ endpoint to verify the server is up and responding and a search endpoint
 providing a search across all public Gists for a given Github account.
 """
 
-import requests
-from flask import Flask, jsonify, request
-
+from flask import Flask
+from flask_restful import Api
+from resources.search import GistSearchApi
 
 app = Flask(__name__)
+api = Api(app)
 
 
 @app.route("/ping")
@@ -21,56 +22,8 @@ def ping():
     return "pong"
 
 
-def gists_for_user(username: str):
-    """Provides the list of gist metadata for a given user.
-
-    This abstracts the /users/:username/gist endpoint from the Github API.
-    See https://developer.github.com/v3/gists/#list-a-users-gists for
-    more information.
-
-    Args:
-        username (string): the user to query gists for
-
-    Returns:
-        The dict parsed from the json response from the Github API.  See
-        the above URL for details of the expected structure.
-    """
-    gists_url = 'https://api.github.com/users/{username}/gists'.format(username=username)
-    response = requests.get(gists_url)
-    return response.json()
+api.add_resource(GistSearchApi, "/api/v1/search", endpoint="search")
 
 
-@app.route("/api/v1/search", methods=['POST'])
-def search():
-    """Provides matches for a single pattern across a single users gists.
-
-    Pulls down a list of all gists for a given user and then searches
-    each gist for a given regular expression.
-
-    Returns:
-        A Flask Response object of type application/json.  The result
-        object contains the list of matches along with a 'status' key
-        indicating any failure conditions.
-    """
-    post_data = request.get_json()
-
-    username = post_data['username']
-    pattern = post_data['pattern']
-
-    result = {}
-    gists = gists_for_user(username)
-
-    for gist in gists:
-        # TODO: Fetch each gist and check for the pattern
-        pass
-
-    result['status'] = 'success'
-    result['username'] = username
-    result['pattern'] = pattern
-    result['matches'] = []
-
-    return jsonify(result)
-
-
-if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=9876)
+if __name__ == "__main__":
+    app.run(debug=True, host="0.0.0.0", port=9876)
