@@ -1,3 +1,4 @@
+from email.policy import default
 from requests import request
 from flask import jsonify
 from flask_restful import Resource, reqparse, marshal
@@ -21,12 +22,14 @@ class GistSearchApi(Resource):
 
     def post(self):
         request_args = self.reqparse.parse_args()
+        start = request_args.get("start")
+        limit = request_args.get("limit")
         results = {
             "status": "success",
             "username": request_args["username"],
             "pattern": request_args["pattern"],
             "matches":  get_all_matched_gists(
-                request_args["pattern"], gists_for_user(request_args["username"])
+                request_args["pattern"], gists_for_user(request_args["username"], page=start, per_page=limit)
             )
         }
         return jsonify(marshal(results, search_api_fields))
