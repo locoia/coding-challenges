@@ -41,3 +41,7 @@ Please don't use a github API client (i.e. using a basic HTTP library like reque
 * For a detached mode use ```-d``` before port flag
 
 Application is available at http://0.0.0.0:5000/api/v1/search 
+
+## Formatting and linting
+* There is a pre-commit hook within the repository that will run on every commit to verify and format the code
+* I used ```isort```, ```black```, and ```autoflake``` for pre commit code validations
