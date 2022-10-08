@@ -1,7 +1,7 @@
 import requests
 
 
-def gists_for_user(username: str, page: int=1, per_page:int =30):
+def gists_for_user(username: str, page: int = 1, per_page: int = 30):
     """Provides the list of gist metadata for a given user.
 
     This abstracts the /users/:username/gist endpoint from the Github API.

@@ -8,12 +8,9 @@ endpoint to verify the server is up and responding and a search endpoint
 providing a search across all public Gists for a given Github account.
 """
 
-import requests
-from flask import Flask, jsonify, request
+from flask import Flask
 from flask_restful import Api
-
 from resources.search import GistSearchApi
-
 
 app = Flask(__name__)
 api = Api(app)

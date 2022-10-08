@@ -1,9 +1,7 @@
-from email.policy import default
-from requests import request
 from flask import jsonify
-from flask_restful import Resource, reqparse, marshal
-from helpers.matcher import get_all_matched_gists
+from flask_restful import Resource, marshal, reqparse
 from helpers.gists import gists_for_user
+from helpers.matcher import get_all_matched_gists
 from serializers.gist_search_serailizer import search_api_fields
 
 
@@ -28,9 +26,9 @@ class GistSearchApi(Resource):
             "status": "success",
             "username": request_args["username"],
             "pattern": request_args["pattern"],
-            "matches":  get_all_matched_gists(
-                request_args["pattern"], gists_for_user(request_args["username"], page=start, per_page=limit)
-            )
+            "matches": get_all_matched_gists(
+                request_args["pattern"],
+                gists_for_user(request_args["username"], page=start, per_page=limit),
+            ),
         }
         return jsonify(marshal(results, search_api_fields))
-    

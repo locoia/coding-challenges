@@ -1,8 +1,6 @@
 from flask_restful import fields
 
-
-
-# fields for matches could also be nested 
+# fields for matches could also be nested
 # and then we'd define the structure of the nested response
 
 search_api_fields = {
