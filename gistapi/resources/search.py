@@ -16,11 +16,13 @@ class GistSearchApi(Resource):
             location="json",
         )
         self.reqparse.add_argument("pattern", type=str, default="", location="json")
+        self.reqparse.add_argument("start", type=int)
+        self.reqparse.add_argument("limit", type=int)
         super().__init__()
 
     def post(self):
         request_args = self.reqparse.parse_args()
-        start = request_args.get("start")
+        start = request_args["start"]
         limit = request_args.get("limit")
         results = {
             "status": "success",
@@ -28,7 +30,7 @@ class GistSearchApi(Resource):
             "pattern": request_args["pattern"],
             "matches": get_all_matched_gists(
                 request_args["pattern"],
-                gists_for_user(request_args["username"], page=start, per_page=limit),
+                gists_for_user(request_args["username"], page=int(start), per_page=int(limit)),
             ),
         }
         return jsonify(marshal(results, search_api_fields))

@@ -15,6 +15,6 @@ def gists_for_user(username: str, page: int = 1, per_page: int = 30):
         The dict parsed from the json response from the Github API.  See
         the above URL for details of the expected structure.
     """
-    gists_url = f"https://api.github.com/users/{username}/gists?{page}&{per_page}"
+    gists_url = f"https://api.github.com/users/{username}/gists?page={page}&per_page={per_page}"
     response = requests.get(gists_url)
     return response.json()
