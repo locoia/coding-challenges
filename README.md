@@ -1,3 +1,54 @@
+# Implementation
+
+## Starting the server
+
+* Updated code to include RE to iterate through Gist to outline a specific user and pattern that can be passed into the flask server.
+
+* To run this do the following:
+*   In a terminal launch gistapi.py, this will start the flask server and provide you the endpoint data you will need to run your curl command against.
+*   Open a second Terminal and issue a curl command to query gist as follows, replacing the http: server endpoint with your data you received from the
+*   the step above:                    
+*       curl -H "Content-Type: application/json" \
+           -X POST \
+           -d '{"username": "justdionysus", "pattern": "import requests"}' \
+           http://127.0.0.1:8000/api/v1/search
+
+*    OUTPUT:
+*    {
+  "matches": [
+    [
+      "https://gist.github.com/justdionysus/65e6162d99c2e2ea8049b0584dd00912"
+    ]
+  ],
+  "pattern": "import requests",
+  "status": "success",
+  "username": "justdionysus"
+}
+
+## Test Case implementation
+
+* Navigate to the Test directory 
+*   cd /Test
+* Execute the test case
+*   test_1.py
+
+* A successful test should result with the following output:
+*       ============================= test session starts ==============================
+collecting ... collected 2 items
+
+test_gistapi.py::test_ping PASSED                                        [ 50%]
+test_gistapi.py::test_search PASSED                                      [100%]
+
+============================== 2 passed in 1.84s ===============================
+
+Process finished with exit code 0
+
+# Running in Docker
+* Issue the following commands 
+*   docker build . -t flask-app
+*   docker run -p 8000:8000 flask-app
+
+
 # Challenge
 
 This challenge is divided between the main task and additional stretch goals. All of those stretch goals are optional, but we would love to see them implemented. It is expected that you should be able to finish the challenge in about 1.5 hours. If you feel you are not able to implement everything on time, please, try instead describing how you would solve the points you didn't finish.
