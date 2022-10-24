@@ -48,6 +48,11 @@ Process finished with exit code 0
 *   docker build . -t flask-app
 *   docker run -p 8000:8000 flask-app
 
+## Code Quality 
+* Using PyCharm IDE implemented PEP8 Linter
+
+
+
 
 # Challenge
 
