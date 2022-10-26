@@ -51,8 +51,8 @@ Process finished with exit code 0
 ## Code Quality 
 * Using PyCharm IDE implemented PEP8 Linter
 
-
-
+## Data Validation 
+* Implemented in gistapi2.py as a second iteration 
 
 # Challenge
 
