@@ -70,7 +70,11 @@ def search():
         file_url = gist['files'][gist_files[0]]['raw_url']
         open_url = requests.get(file_url)
         open_url_to_string = open_url.content.decode('utf-8')
+        
+        # Implemented Python REGEX search method that searches for matches to the regex pattern inside the 
+        # determined string and returns the corresponding Match Object instance whenthere is a match found.
 
+The re.search() returns only the first match to the pattern from the target string. 
         if re.search(pattern, open_url_to_string):
             public_gist_url = "https://gist.github.com/" + username + "/" + gist['id']
             matched.append(public_gist_url)
