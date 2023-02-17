@@ -9,7 +9,10 @@ providing a search across all public Gists for a given Github account.
 """
 
 import requests
+import re
+
 from flask import Flask, jsonify, request
+from services import search_pattern
 
 
 app = Flask(__name__)
@@ -56,19 +59,21 @@ def search():
 
     username = post_data['username']
     pattern = post_data['pattern']
-
+    matches = []
     result = {}
     gists = gists_for_user(username)
 
     for gist in gists:
         # TODO: Fetch each gist and check for the pattern
-        pass
+        for _, info in gist['files'].items():
+            if search_pattern(url=info['raw_url'], pattern=pattern):
+                matches.append(info)
 
     result['status'] = 'success'
     result['username'] = username
     result['pattern'] = pattern
-    result['matches'] = []
-
+    result['matches'] = matches
+    
     return jsonify(result)
 
 
