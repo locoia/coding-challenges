@@ -1,0 +1,7 @@
+version: "3.9"
+services:
+  gistapi:
+    restart: unless-stopped
+    build: .
+    ports:
+      - "9876:9876"

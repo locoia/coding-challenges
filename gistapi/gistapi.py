@@ -7,13 +7,10 @@ module implements a Flask server exposing two endpoints: a simple ping
 endpoint to verify the server is up and responding and a search endpoint
 providing a search across all public Gists for a given Github account.
 """
-
 import requests
-import re
 
 from flask import Flask, jsonify, request
-from services import search_pattern
-
+from functions.utils import search_pattern
 
 app = Flask(__name__)
 
@@ -38,8 +35,8 @@ def gists_for_user(username: str):
         The dict parsed from the json response from the Github API.  See
         the above URL for details of the expected structure.
     """
-    gists_url = 'https://api.github.com/users/{username}/gists'.format(username=username)
-    response = requests.get(gists_url)
+    gists_url = f'https://api.github.com/users/{username}/gists'
+    response = requests.get(gists_url, timeout=15)
     return response.json()
 
 
@@ -61,19 +58,23 @@ def search():
     pattern = post_data['pattern']
     matches = []
     result = {}
-    gists = gists_for_user(username)
+    try:
+        gists = gists_for_user(username)
 
-    for gist in gists:
-        # TODO: Fetch each gist and check for the pattern
-        for _, info in gist['files'].items():
-            if search_pattern(url=info['raw_url'], pattern=pattern):
-                matches.append(info)
+        for gist in gists:
+            for _, info in gist['files'].items():
+                if search_pattern(url=info['raw_url'], pattern=pattern):
+                    matches.append(info)
+    except requests.exceptions.ConnectionError as ex:
+        # just for now, in future change it to logger
+        print(str(ex))
+        result['status'] = 'fail'
+    else:
+        result['status'] = 'success'
 
-    result['status'] = 'success'
     result['username'] = username
     result['pattern'] = pattern
     result['matches'] = matches
-    
     return jsonify(result)
 
 

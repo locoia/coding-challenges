@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "backend-coding-challenge"
+version = "0.1.0"
+description = ""
+authors = ["elvinmirzazada <mirzezadeh.elvin@gmail.com>"]
+readme = "README.md"
+packages = []
+
+[tool.poetry.dependencies]
+python = "^3.9"
+flask = "2.2.2"
+requests = "2.28.1"
+pytest = ">=7.2.1,<7.3.0"
+pylint = "^2.16.2"
+flake8 = "^6.0.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
