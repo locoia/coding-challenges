@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "backend-coding-challenge"
+version = "0.1.0"
+description = ""
+authors = ["Lauris V <lauris.v@cptim.com>"]
+readme = "README.md"
+packages = [{include = "gistapi"}]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+flask = "2.2.2"
+requests = "2.28.1"
+pylint = "^2.16.2"
+pytest = "^7.2.1"
+mock = "^5.0.1"
+pylint-flask = "^0.6"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
