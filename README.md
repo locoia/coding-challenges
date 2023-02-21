@@ -36,11 +36,11 @@ Please don't use a github API client (i.e. using a basic HTTP library like reque
 
 ## Running the service
 
-  # The service can be run in 2 ways:
+The service can be run in 2 ways:
   - by running `flask --app ./gistapi/gistapi run --host=0.0.0.0`
   - or by running a docker container `docker build -t gistapi . && docker run -it gistapi`
   
-  # In order to run tests, this command should be run in terminal: `poetry run pytest`
+In order to run tests, this command should be run in terminal: `poetry run pytest`
 
-  # For code quality checks, run pylint with this command: `poetry run pylint gistapi` or 
+For code quality checks, run pylint with this command: `poetry run pylint gistapi` or 
     `poetry run pylint --load-plugins pylint_flask gistapi` to use flask specific linter.
