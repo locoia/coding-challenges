@@ -1,34 +1,27 @@
-# Challenge
+## Dependencies
+- Docker
+- Docker Compose
+- Make
 
-This challenge is divided between the main task and additional stretch goals. All of those stretch goals are optional, but we would love to see them implemented. It is expected that you should be able to finish the challenge in about 1.5 hours. If you feel you are not able to implement everything on time, please, try instead describing how you would solve the points you didn't finish.
+## Installation
+1. Clone the repository
+2. Go to the project root directory
+3. Create **.env** file with the variables which are specified in the **.env.example** file
+4. Run `make run` command in the terminal to spin up the application
+5. To stop the application run `make stop` command
+6. To execute tests run `make tests` command
 
-And also, please do not hesitate to ask any questions. Good luck!
+## API Doc
+Base URL = http://{HOST_FROM_ENV_FILE}:{PORT_FROM_ENV_FILE}
 
-## gistapi
+### Available endpoints
 
-Gistapi is a simple HTTP API server implemented in Flask for searching a user's public Github Gists.
-The existing code already implements most of the Flask boilerplate for you.
-The main functionality is left for you to implement.
-The goal is to implement an endpoint that searches a user's Gists with a regular expression.
-For example, I'd like to know all Gists for user `justdionysus` that contain the pattern `import requests`.
-The code in `gistapi.py` contains some comments to help you find your way.
+_Method_ GET
+_Endpoint_ /ping
 
-To complete the challenge, you'll have to write some HTTP queries from `Gistapi` to the Github API to pull down each Gist for the target user.
-Please don't use a github API client (i.e. using a basic HTTP library like requests or aiohttp or urllib3 is fine but not PyGithub or similar).
-
-
-## Stretch goals
-
-* Implement a few tests (using a testing framework of your choice)
-* In all places where it makes sense, implement data validation, error handling, pagination
-* Migrate from `requirements.txt` to `pyproject.toml` (e.g. using [poetry](https://python-poetry.org/))
-* Implement a simple Dockerfile
-* Implement handling of huge gists
-* Set up the necessary tools to ensure code quality (feel free to pick up a set of tools you personally prefer)
-* Document how to start the application, how to build the docker image, how to run tests, and (optionally) how to run code quality checkers
-* Prepare a TODO.md file describing possible further improvements to the archtiecture:
-    - Can we use a database? What for? SQL or NoSQL?
-    - How can we protect the api from abusing it?
-    - How can we deploy the application in a cloud environment?
-    - How can we be sure the application is alive and works as expected when deployed into a cloud environment?
-    - Any other topics you may find interesting and/or important to cover
+_Method_ POST
+_Endpoint_ /api/v1/search
+_Body_ {
+        "username": "{username}",
+        "pattern": "{pattern}"
+    }

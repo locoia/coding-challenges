@@ -1,0 +1,13 @@
+version: '3.7'
+
+services:
+  backend:
+    container_name: gistapi-backend
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      .env
+    ports:
+      - "9877:9876"
+    command: poetry run python main.py
