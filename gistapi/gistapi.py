@@ -8,7 +8,7 @@ endpoint to verify the server is up and responding and a search endpoint
 providing a search across all public Gists for a given Github account.
 """
 
-import requests
+import requests, json   
 from flask import Flask, jsonify, request
 
 
@@ -20,7 +20,7 @@ def ping():
     """Provide a static response to a simple GET request."""
     return "pong"
 
-
+@app.route("/user/<string:username>")
 def gists_for_user(username: str):
     """Provides the list of gist metadata for a given user.
 
@@ -35,10 +35,19 @@ def gists_for_user(username: str):
         The dict parsed from the json response from the Github API.  See
         the above URL for details of the expected structure.
     """
+    
+
+    dic_results = {}
     gists_url = 'https://api.github.com/users/{username}/gists'.format(username=username)
     response = requests.get(gists_url)
-    return response.json()
+    diction=response.json()
+    dic_results['User']=username
+    for n in diction:
+        dic_results['Files']=n['files']      
+        dic_results['User_url']=n["owner"]["html_url"]
 
+    return dic_results
+    
 
 @app.route("/api/v1/search", methods=['POST'])
 def search():
@@ -52,22 +61,35 @@ def search():
         object contains the list of matches along with a 'status' key
         indicating any failure conditions.
     """
-    post_data = request.get_json()
+    request_data = request.get_json()
 
-    username = post_data['username']
-    pattern = post_data['pattern']
+    username = request_data['username']
+    pattern = request_data['pattern']
+
+    if username=="" or username==None or pattern==None or pattern=="":
+        return "You need a user and a pattern", 400
+
+    gists_url = 'https://api.github.com/search/code?q={pattern}+user:{username}'.format(username=username, pattern=pattern)
+    response = requests.get(gists_url)      
+    gists = response.json()
+
+    clean_results=[]
+
+    for data in gists['items']:
+        clean_results.append({"Repository_name": data['repository']['name'],
+                              "File_name": data['path'],
+                              "HTML_url_file":data['html_url'],
+                            })
+
 
     result = {}
-    gists = gists_for_user(username)
-
-    for gist in gists:
-        # TODO: Fetch each gist and check for the pattern
-        pass
-
     result['status'] = 'success'
     result['username'] = username
     result['pattern'] = pattern
-    result['matches'] = []
+    if clean_results==[]:
+        result['matches'] = "Matches not found"
+    else:
+        result['matches'] = clean_results
 
     return jsonify(result)
 
