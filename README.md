@@ -16,12 +16,12 @@ Base URL = http://{HOST_FROM_ENV_FILE}:{PORT_FROM_ENV_FILE}
 
 ### Available endpoints
 
-_Method_ GET
-_Endpoint_ /ping
+_Method_ GET <br>
+_Endpoint_ /ping <br>
 
-_Method_ POST
-_Endpoint_ /api/v1/search
-_Body_ {
-        "username": "{username}",
-        "pattern": "{pattern}"
-    }
+_Method_ POST <br>
+_Endpoint_ /api/v1/search <br>
+_Body_ { <br>
+        "username": "{username}", <br>
+        "pattern": "{pattern}" <br>
+    } <br>
