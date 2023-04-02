@@ -7,18 +7,10 @@ module implements a Flask server exposing two endpoints: a simple ping
 endpoint to verify the server is up and responding and a search endpoint
 providing a search across all public Gists for a given Github account.
 """
+import re
+from typing import Pattern
 
 import requests
-from flask import Flask, jsonify, request
-
-
-app = Flask(__name__)
-
-
-@app.route("/ping")
-def ping():
-    """Provide a static response to a simple GET request."""
-    return "pong"
 
 
 def gists_for_user(username: str):
@@ -35,42 +27,23 @@ def gists_for_user(username: str):
         The dict parsed from the json response from the Github API.  See
         the above URL for details of the expected structure.
     """
-    gists_url = 'https://api.github.com/users/{username}/gists'.format(username=username)
+    gists_url = f'https://api.github.com/users/{username}/gists'
     response = requests.get(gists_url)
     return response.json()
 
 
-@app.route("/api/v1/search", methods=['POST'])
-def search():
-    """Provides matches for a single pattern across a single users gists.
-
-    Pulls down a list of all gists for a given user and then searches
-    each gist for a given regular expression.
-
-    Returns:
-        A Flask Response object of type application/json.  The result
-        object contains the list of matches along with a 'status' key
-        indicating any failure conditions.
+def is_matching_gist(gist: dict, regex_pattern: Pattern) -> bool:
     """
-    post_data = request.get_json()
-
-    username = post_data['username']
-    pattern = post_data['pattern']
-
-    result = {}
-    gists = gists_for_user(username)
-
-    for gist in gists:
-        # TODO: Fetch each gist and check for the pattern
-        pass
-
-    result['status'] = 'success'
-    result['username'] = username
-    result['pattern'] = pattern
-    result['matches'] = []
-
-    return jsonify(result)
-
-
-if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=9876)
+    - uses the raw_url to get larger than > 1 mb files
+    More info about the Endpoints: https://docs.github.com/en/rest/gists/gists?apiVersion=2022-11-28
+    """
+    if (files := gist.get('files')) is not None:
+        for file in files:
+            if (raw_url := gist['files'][file].get('raw_url')) is not None:
+                # TODO this .get should be done async
+                response = requests.get(raw_url)
+                response.raise_for_status()
+                if response.status_code == 200 and \
+                        re.search(regex_pattern, response.text):
+                    return True
+    return False

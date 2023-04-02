@@ -32,3 +32,44 @@ Please don't use a github API client (i.e. using a basic HTTP library like reque
     - How can we deploy the application in a cloud environment?
     - How can we be sure the application is alive and works as expected when deployed into a cloud environment?
     - Any other topics you may find interesting and/or important to cover
+
+
+## How to run the app
+```docker
+docker-compose up -d
+```
+
+## Run flake8
+```bash
+flake8
+```
+
+## Run tests
+```bash
+python -m pytest ./
+```
+
+## Basic usage
+- Valid request example:
+```bash
+curl -i -X POST \
+   -H "Content-Type:application/json" \
+   -d \
+'{
+  "username": "user",
+  "pattern": "\\d\\d\\d\\d\\d"
+}' \
+ 'http://0.0.0.0:9876/api/v1/search'
+```
+
+- Invalid request example:
+```bash
+curl -i -X POST \
+   -H "Content-Type:application/json" \
+   -d \
+'{
+  "username": "user",
+  "pattern": "\\d\\d\\d\\d\\ewfewfewfd"
+}' \
+ 'http://0.0.0.0:9876/api/v1/search'
+```

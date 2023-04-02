@@ -1,0 +1,14 @@
+version: '3'
+services:
+  app:
+    build:
+      context: ./
+      dockerfile: .Dockerfile
+    volumes:
+      - ./:/usr/src/locoia
+    ports:
+      - "9876:9876"
+    command:
+      - /bin/bash
+      - -c
+      - "python /usr/src/locoia/app.py"
