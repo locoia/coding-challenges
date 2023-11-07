@@ -31,7 +31,7 @@ RUN poetry install --only main --no-interaction --no-ansi
 # Copy application files
 COPY gistapi /app/gistapi
 
-# Copy application files
+# Copy test files
 COPY tests /app/tests
 
 # Run the application using Gunicorn with Uvicorn workers
