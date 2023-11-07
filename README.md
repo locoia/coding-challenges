@@ -32,3 +32,56 @@ Please don't use a github API client (i.e. using a basic HTTP library like reque
     - How can we deploy the application in a cloud environment?
     - How can we be sure the application is alive and works as expected when deployed into a cloud environment?
     - Any other topics you may find interesting and/or important to cover
+
+## Docker
+
+### Using Dockerfile
+Build: 
+```bash
+docker build -t gistapi .
+```
+
+Run:
+```bash
+docker run -p 5000:5000 -d gistapi
+```
+
+### Using docker-compose.yml - for debugging and testing
+Build and run tests: 
+```bash
+docker-compose up --build test
+```
+
+Build and run:
+```bash
+docker-compose up --build web
+```
+
+## Poetry
+
+### Tests: 
+```bash
+poetry run pytest
+```
+Run: 
+#### set .env file in root dir with FLASK_APP=gistapi.py  
+```bash
+poetry run flask run
+```
+
+### Code Quality: 
+#### bandit (security linter) and black (a code formatter) - alternative is flake8 for a varity of checks
+```bash
+poetry install --only dev
+```
+
+### To run black
+```bash
+poetry run black --check .
+```
+
+### To check code with bandit
+#### Only checking gistapi as checking tests would flag assert
+```bash
+poetry run bandit -r .\gistapi\
+```
