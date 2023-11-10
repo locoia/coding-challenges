@@ -8,6 +8,8 @@ endpoint to verify the server is up and responding and a search endpoint
 providing a search across all public Gists for a given Github account.
 """
 
+import re
+
 import requests
 from flask import Flask, jsonify, request
 
@@ -34,7 +36,7 @@ def gists_for_user(username: str):
         The dict parsed from the json response from the Github API.  See
         the above URL for details of the expected structure.
     """
-    gists_url = f"https://api.github.com/users/{username}/gists"
+    gists_url = "https://api.github.com/users/{username}/gists".format(username=username)
     response = requests.get(gists_url)
     return response.json()
 
@@ -59,14 +61,23 @@ def search():
     result = {}
     gists = gists_for_user(username)
 
-    for gist in gists:
-        # TODO: Fetch each gist and check for the pattern
-        pass
-
     result["status"] = "success"
     result["username"] = username
     result["pattern"] = pattern
     result["matches"] = []
+
+    try:
+        for gist in gists:
+            for file in gist["files"]:
+                file_obj = gist["files"][file]
+                raw_file_url = file_obj["raw_url"]
+                response = requests.get(raw_file_url)
+                if response.status_code == 200:
+                    content = response.text
+                    if re.search(pattern, content):
+                        result["matches"].append(gist["html_url"])
+    except Exception as e:
+        result["status"] = str(e)
 
     return jsonify(result)
 
