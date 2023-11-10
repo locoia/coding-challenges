@@ -40,7 +40,7 @@ def gists_for_user(username: str) -> dict:
         The dict parsed from the json response from the Github API.  See
         the above URL for details of the expected structure.
     """
-    gists_url = "https://api.github.com/users/{username}/gists".format(username=username)
+    gists_url = f"https://api.github.com/users/{username}/gists"
     response = requests.get(gists_url)
 
     if response.status_code != HTTPStatus.OK:
@@ -64,7 +64,7 @@ async def _fetch_content(raw_file_url: str) -> str:
     """
     async with aiohttp.ClientSession() as session, session.get(raw_file_url) as response:
         if response.status != HTTPStatus.OK:
-            raise aiohttp.ClientError(f"Error fetching {raw_file_url}: {response.status}")
+            raise aiohttp.ClientError(f"Error fetching {raw_file_url}: {response.status} {response.reason}")
         return await response.text()
 
 
