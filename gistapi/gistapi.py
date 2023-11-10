@@ -10,6 +10,7 @@ providing a search across all public Gists for a given Github account.
 
 import asyncio
 import re
+from http import HTTPStatus
 
 import aiohttp
 import requests
@@ -41,10 +42,46 @@ def gists_for_user(username: str) -> dict:
     """
     gists_url = "https://api.github.com/users/{username}/gists".format(username=username)
     response = requests.get(gists_url)
+
+    if response.status_code != HTTPStatus.OK:
+        response.raise_for_status()
+
     return response.json()
 
 
-async def fetch_and_match(raw_file_url: str, pattern: str) -> bool:
+async def _fetch_content(raw_file_url: str) -> str:
+    """Fetch the content of the file at the given URL.
+
+    Args:
+        raw_file_url (str): The URL of the file to fetch.
+
+    Returns:
+        The content of the file.
+
+    Raises:
+        aiohttp.ClientError: If there was an error fetching the file.
+        Exception: If there was an error reading the file content.
+    """
+    async with aiohttp.ClientSession() as session, session.get(raw_file_url) as response:
+        if response.status != HTTPStatus.OK:
+            raise aiohttp.ClientError(f"Error fetching {raw_file_url}: {response.status}")
+        return await response.text()
+
+
+def _matches_pattern(content: str, pattern: str) -> bool:
+    """Check if the given content matches the given pattern.
+
+    Args:
+        content (str): The content to check.
+        pattern (str): The pattern to match.
+
+    Returns:
+        A boolean indicating whether the pattern matched the content.
+    """
+    return bool(re.search(pattern, content))
+
+
+async def fetch_and_check_pattern(raw_file_url: str, pattern: str) -> bool:
     """Fetch the content of the file at the given URL and check if it matches the given pattern.
 
     Args:
@@ -52,39 +89,31 @@ async def fetch_and_match(raw_file_url: str, pattern: str) -> bool:
         pattern (str): The pattern to match in the file content.
 
     Returns:
-        A boolean indicating whether the file content matched the given pattern.
+        A boolean indicating whether the pattern matched the content.
+
+    Raises:
+        aiohttp.ClientError: If there was an error fetching the file.
+        Exception: If there was an error reading the file content.
     """
     try:
-        async with aiohttp.ClientSession() as session, session.get(raw_file_url) as response:
-            if response.status != 200:
-                logger.error(f"Error fetching {raw_file_url}: {response.status}")
-                return False
-
-            try:
-                content = await response.text()
-            except Exception as e:
-                logger.error(f"Error reading content from {raw_file_url}: {e}")
-                return False
-
-            return bool(re.search(pattern, content))
-    except aiohttp.ClientError as e:
-        logger.error(f"Error fetching {raw_file_url}: {e}")
-        return False
+        content = await _fetch_content(raw_file_url)
+        return _matches_pattern(content, pattern)
+    except Exception as e:
+        logger.error(f"Error during fetching and matching of pattern: {e}")
+        raise
 
 
-async def find_matched_gists_for_user(username: str, pattern: str) -> list[str]:
+async def find_matching_gists(gists: dict, pattern: str) -> list[str]:
     """
-    Finds all gists for a given user that contain at least one file matching a given pattern.
+    Finds all gists that contain at least one file matching the given pattern.
 
     Args:
-        username (str): The GitHub username to search for gists.
-        pattern (str): The pattern to search for in the files of each gist.
+        gists (dict): A dictionary of gists to search through.
+        pattern (str): The pattern to search for in the gist files.
 
     Returns:
-        A list of URLs for all gists that contain at least one file matching the given pattern.
+        A list of URLs for all gists that contain at least one file matching the pattern.
     """
-    gists = gists_for_user(username)
-
     gist_matches = []
     for gist in gists:
         tasks = []
@@ -92,7 +121,7 @@ async def find_matched_gists_for_user(username: str, pattern: str) -> list[str]:
             async with asyncio.TaskGroup() as tg:
                 for file_obj in gist["files"].values():
                     raw_file_url = file_obj["raw_url"]
-                    tasks.append(tg.create_task(fetch_and_match(raw_file_url, pattern)))
+                    tasks.append(tg.create_task(fetch_and_check_pattern(raw_file_url, pattern)))
         except Exception as e:
             logger.error(f"Error fetching gist {gist['html_url']}: {e}")
             continue
@@ -125,9 +154,16 @@ async def search():
     result = {"status": "success", "username": username, "pattern": pattern, "matches": []}
 
     try:
-        result["matches"] = await find_matched_gists_for_user(username, pattern)
+        gists = gists_for_user(username)
+    except requests.HTTPError as e:
+        result["status"] = str(e)
+        return jsonify(result), e.response.status_code
+
+    try:
+        result["matches"] = await find_matching_gists(gists, pattern)
     except Exception as e:
         result["status"] = str(e)
+        return jsonify(result), HTTPStatus.INTERNAL_SERVER_ERROR
 
     return jsonify(result)
 
