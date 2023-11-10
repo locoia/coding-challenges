@@ -32,3 +32,32 @@ Please don't use a github API client (i.e. using a basic HTTP library like reque
     - How can we deploy the application in a cloud environment?
     - How can we be sure the application is alive and works as expected when deployed into a cloud environment?
     - Any other topics you may find interesting and/or important to cover
+
+
+## How to start the application
+
+The easiest way to start the application is to use the provided `docker-compose.yml` file with next command:
+
+```bash
+docker compose up
+```
+
+This will build a new web server image for Docker, mapping the project directory to an `/app` directory in a container, and start the application on port 9876 in development mode with enabled debugging support. You can then use the following command to test it:
+
+```bash
+curl -H "Content-Type: application/json" -d '{"username": "justdionysus", "pattern": "import requests"}' http://0.0.0.0:9876/api/v1/search
+```
+
+## How to run tests
+
+To run tests, you can use the following command:
+
+```bash
+pytest
+```
+
+To run tests with coverage report in terminal, you can use the following command:
+
+```bash
+pytest --cov-report term-missing --cov-branch --cov=gistapi/ tests/
+```
