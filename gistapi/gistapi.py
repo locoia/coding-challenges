@@ -11,7 +11,6 @@ providing a search across all public Gists for a given Github account.
 import requests
 from flask import Flask, jsonify, request
 
-
 app = Flask(__name__)
 
 
@@ -35,12 +34,12 @@ def gists_for_user(username: str):
         The dict parsed from the json response from the Github API.  See
         the above URL for details of the expected structure.
     """
-    gists_url = 'https://api.github.com/users/{username}/gists'.format(username=username)
+    gists_url = f"https://api.github.com/users/{username}/gists"
     response = requests.get(gists_url)
     return response.json()
 
 
-@app.route("/api/v1/search", methods=['POST'])
+@app.route("/api/v1/search", methods=["POST"])
 def search():
     """Provides matches for a single pattern across a single users gists.
 
@@ -54,8 +53,8 @@ def search():
     """
     post_data = request.get_json()
 
-    username = post_data['username']
-    pattern = post_data['pattern']
+    username = post_data["username"]
+    pattern = post_data["pattern"]
 
     result = {}
     gists = gists_for_user(username)
@@ -64,13 +63,13 @@ def search():
         # TODO: Fetch each gist and check for the pattern
         pass
 
-    result['status'] = 'success'
-    result['username'] = username
-    result['pattern'] = pattern
-    result['matches'] = []
+    result["status"] = "success"
+    result["username"] = username
+    result["pattern"] = pattern
+    result["matches"] = []
 
     return jsonify(result)
 
 
-if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=9876)
+if __name__ == "__main__":
+    app.run(debug=True, host="0.0.0.0", port=9876)
