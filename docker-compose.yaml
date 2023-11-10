@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "9876:9876"
+    volumes:
+      - .:/app
+    environment:
+      - FLASK_ENV=development
+      - FLASK_APP=gistapi
+      - FLASK_RUN_HOST=0.0.0.0
+      - FLASK_RUN_PORT=9876
+      - FLASK_RUN_DEBUG=true
