@@ -8,12 +8,15 @@ endpoint to verify the server is up and responding and a search endpoint
 providing a search across all public Gists for a given Github account.
 """
 
+import asyncio
 import re
 
+import aiohttp
 import requests
 from flask import Flask, jsonify, request
 
 app = Flask(__name__)
+logger = app.logger
 
 
 @app.route("/ping")
@@ -22,7 +25,7 @@ def ping():
     return "pong"
 
 
-def gists_for_user(username: str):
+def gists_for_user(username: str) -> dict:
     """Provides the list of gist metadata for a given user.
 
     This abstracts the /users/:username/gist endpoint from the Github API.
@@ -41,8 +44,69 @@ def gists_for_user(username: str):
     return response.json()
 
 
+async def fetch_and_match(raw_file_url: str, pattern: str) -> bool:
+    """Fetch the content of the file at the given URL and check if it matches the given pattern.
+
+    Args:
+        raw_file_url (str): The URL of the file to fetch.
+        pattern (str): The pattern to match in the file content.
+
+    Returns:
+        A boolean indicating whether the file content matched the given pattern.
+    """
+    try:
+        async with aiohttp.ClientSession() as session, session.get(raw_file_url) as response:
+            if response.status != 200:
+                logger.error(f"Error fetching {raw_file_url}: {response.status}")
+                return False
+
+            try:
+                content = await response.text()
+            except Exception as e:
+                logger.error(f"Error reading content from {raw_file_url}: {e}")
+                return False
+
+            return bool(re.search(pattern, content))
+    except aiohttp.ClientError as e:
+        logger.error(f"Error fetching {raw_file_url}: {e}")
+        return False
+
+
+async def find_matched_gists_for_user(username: str, pattern: str) -> list[str]:
+    """
+    Finds all gists for a given user that contain at least one file matching a given pattern.
+
+    Args:
+        username (str): The GitHub username to search for gists.
+        pattern (str): The pattern to search for in the files of each gist.
+
+    Returns:
+        A list of URLs for all gists that contain at least one file matching the given pattern.
+    """
+    gists = gists_for_user(username)
+
+    gist_matches = []
+    for gist in gists:
+        tasks = []
+        try:
+            async with asyncio.TaskGroup() as tg:
+                for file_obj in gist["files"].values():
+                    raw_file_url = file_obj["raw_url"]
+                    tasks.append(tg.create_task(fetch_and_match(raw_file_url, pattern)))
+        except Exception as e:
+            logger.error(f"Error fetching gist {gist['html_url']}: {e}")
+            continue
+
+        for task in tasks:
+            if task.result() is True:
+                gist_matches.append(gist["html_url"])
+                break
+
+    return gist_matches
+
+
 @app.route("/api/v1/search", methods=["POST"])
-def search():
+async def search():
     """Provides matches for a single pattern across a single users gists.
 
     Pulls down a list of all gists for a given user and then searches
@@ -58,24 +122,10 @@ def search():
     username = post_data["username"]
     pattern = post_data["pattern"]
 
-    result = {}
-    gists = gists_for_user(username)
-
-    result["status"] = "success"
-    result["username"] = username
-    result["pattern"] = pattern
-    result["matches"] = []
+    result = {"status": "success", "username": username, "pattern": pattern, "matches": []}
 
     try:
-        for gist in gists:
-            for file in gist["files"]:
-                file_obj = gist["files"][file]
-                raw_file_url = file_obj["raw_url"]
-                response = requests.get(raw_file_url)
-                if response.status_code == 200:
-                    content = response.text
-                    if re.search(pattern, content):
-                        result["matches"].append(gist["html_url"])
+        result["matches"] = await find_matched_gists_for_user(username, pattern)
     except Exception as e:
         result["status"] = str(e)
 
