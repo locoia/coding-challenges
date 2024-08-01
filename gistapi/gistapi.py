@@ -7,6 +7,7 @@ module implements a Flask server exposing two endpoints: a simple ping
 endpoint to verify the server is up and responding and a search endpoint
 providing a search across all public Gists for a given Github account.
 """
+
 import re
 
 import requests
@@ -23,7 +24,7 @@ def ping():
     return "pong"
 
 
-@app.route("/api/v1/search", methods=['POST'])
+@app.route("/api/v1/search", methods=["POST"])
 def search():
     """Provides matches for a single pattern across a single users gists.
 
@@ -38,52 +39,70 @@ def search():
     post_data = request.get_json()
     # Validate input data
     if not post_data:
-        return jsonify({'status': 'error', 'message': 'No data provided'}), 400
+        return jsonify({"status": "error", "message": "No data provided"}), 400
 
-    username = post_data.get('username')
-    pattern = post_data.get('pattern')
+    username = post_data.get("username")
+    pattern = post_data.get("pattern")
     # Validate username and pattern
     if not username or not isinstance(username, str):
-        return jsonify({'status': 'error', 'message': 'Invalid or missing username'}), 400
+        return (
+            jsonify({"status": "error", "message": "Invalid or missing username"}),
+            400,
+        )
     if not pattern or not isinstance(pattern, str):
-        return jsonify({'status': 'error', 'message': 'Invalid or missing pattern'}), 400
+        return (
+            jsonify({"status": "error", "message": "Invalid or missing pattern"}),
+            400,
+        )
 
     result = {
-        'status': 'success',
-        'username': username,
-        'pattern': pattern,
-        'matches': []
+        "status": "success",
+        "username": username,
+        "pattern": pattern,
+        "matches": [],
     }
 
     try:
         gists = gists_for_user(username)
     except requests.RequestException as e:
-        return jsonify({'status': 'error', 'message': f'Error fetching gists: {e}'}), 500
+        return (
+            jsonify({"status": "error", "message": f"Error fetching gists: {e}"}),
+            500,
+        )
 
     if gists is None:
-        result['status'] = 'error'
-        result['message'] = 'Failed to fetch gists. Please check the username and try again.'
+        result["status"] = "error"
+        result["message"] = (
+            "Failed to fetch gists. Please check the username and try again."
+        )
         return jsonify(result), 400
 
     for gist in gists:
         try:
-            gist_details = gist_content(gist['url'])
+            gist_details = gist_content(gist["url"])
             if gist_details is None:
                 continue
 
-            for file_name, file_info in gist_details['files'].items():
-                if is_pattern_present(file_info['raw_url'], pattern):
-                    result['matches'].append({
-                        'gist_id': gist_details['id'],
-                        'gist_url': gist_details['html_url'],
-                        'file_name': file_name,
-                        'file_url': file_info['raw_url']
-                    })
+            for file_name, file_info in gist_details["files"].items():
+                if is_pattern_present(file_info["raw_url"], pattern):
+                    result["matches"].append(
+                        {
+                            "gist_id": gist_details["id"],
+                            "gist_url": gist_details["html_url"],
+                            "file_name": file_name,
+                            "file_url": file_info["raw_url"],
+                        }
+                    )
         except requests.RequestException as e:
-            return jsonify({'status': 'error', 'message': f'Error fetching gist content: {e}'}), 500
+            return (
+                jsonify(
+                    {"status": "error", "message": f"Error fetching gist content: {e}"}
+                ),
+                500,
+            )
 
     return jsonify(result)
 
 
-if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=9876)
+if __name__ == "__main__":
+    app.run(debug=True, host="0.0.0.0", port=9876)

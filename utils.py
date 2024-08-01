@@ -16,8 +16,8 @@ def gists_for_user(username: str):
     Returns:
         A list of all gists for the given user.
     """
-    gists_url = f'https://api.github.com/users/{username}/gists'
-    headers = {'Accept': 'application/vnd.github.v3+json'}
+    gists_url = f"https://api.github.com/users/{username}/gists"
+    headers = {"Accept": "application/vnd.github.v3+json"}
     gists = []
 
     while gists_url:
@@ -27,11 +27,11 @@ def gists_for_user(username: str):
         gists.extend(response.json())
         gists_url = None
 
-        if 'Link' in response.headers:
-            links = response.headers['Link'].split(',')
+        if "Link" in response.headers:
+            links = response.headers["Link"].split(",")
             for link in links:
                 if 'rel="next"' in link:
-                    gists_url = link[link.find('<') + 1:link.find('>')]
+                    gists_url = link[link.find("<") + 1 : link.find(">")]
                     break
 
     return gists
@@ -69,6 +69,6 @@ def is_pattern_present(raw_url: str, pattern: str):
         pattern_compiled = re.compile(pattern)
 
         for chunk in response.iter_content(chunk_size=1024):
-            if pattern_compiled.search(chunk.decode('utf-8')):
+            if pattern_compiled.search(chunk.decode("utf-8")):
                 return True
     return False
