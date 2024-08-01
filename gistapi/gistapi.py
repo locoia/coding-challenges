@@ -11,6 +11,7 @@ providing a search across all public Gists for a given Github account.
 import requests
 from flask import Flask, jsonify, request
 
+from utils import gists_for_user, gist_content, is_pattern_present
 
 app = Flask(__name__)
 
@@ -21,26 +22,7 @@ def ping():
     return "pong"
 
 
-def gists_for_user(username: str):
-    """Provides the list of gist metadata for a given user.
-
-    This abstracts the /users/:username/gist endpoint from the Github API.
-    See https://developer.github.com/v3/gists/#list-a-users-gists for
-    more information.
-
-    Args:
-        username (string): the user to query gists for
-
-    Returns:
-        The dict parsed from the json response from the Github API.  See
-        the above URL for details of the expected structure.
-    """
-    gists_url = 'https://api.github.com/users/{username}/gists'.format(username=username)
-    response = requests.get(gists_url)
-    return response.json()
-
-
-@app.route("/api/v1/search", methods=['POST'])
+@app.route("/api/v1/search", methods=["POST"])
 def search():
     """Provides matches for a single pattern across a single users gists.
 
@@ -53,24 +35,72 @@ def search():
         indicating any failure conditions.
     """
     post_data = request.get_json()
+    # Validate input data
+    if not post_data:
+        return jsonify({"status": "error", "message": "No data provided"}), 400
 
-    username = post_data['username']
-    pattern = post_data['pattern']
+    username = post_data.get("username")
+    pattern = post_data.get("pattern")
+    # Validate username and pattern
+    if not username or not isinstance(username, str):
+        return (
+            jsonify({"status": "error", "message": "Invalid or missing username"}),
+            400,
+        )
+    if not pattern or not isinstance(pattern, str):
+        return (
+            jsonify({"status": "error", "message": "Invalid or missing pattern"}),
+            400,
+        )
 
-    result = {}
-    gists = gists_for_user(username)
+    result = {
+        "status": "success",
+        "username": username,
+        "pattern": pattern,
+        "matches": [],
+    }
+
+    try:
+        gists = gists_for_user(username)
+    except requests.RequestException as e:
+        return (
+            jsonify({"status": "error", "message": f"Error fetching gists: {e}"}),
+            500,
+        )
+
+    if gists is None:
+        result["status"] = "error"
+        result["message"] = (
+            "Failed to fetch gists. Please check the username and try again."
+        )
+        return jsonify(result), 400
 
     for gist in gists:
-        # TODO: Fetch each gist and check for the pattern
-        pass
+        try:
+            gist_details = gist_content(gist["url"])
+            if gist_details is None:
+                continue
 
-    result['status'] = 'success'
-    result['username'] = username
-    result['pattern'] = pattern
-    result['matches'] = []
+            for file_name, file_info in gist_details["files"].items():
+                if is_pattern_present(file_info["raw_url"], pattern):
+                    result["matches"].append(
+                        {
+                            "gist_id": gist_details["id"],
+                            "gist_url": gist_details["html_url"],
+                            "file_name": file_name,
+                            "file_url": file_info["raw_url"],
+                        }
+                    )
+        except requests.RequestException as e:
+            return (
+                jsonify(
+                    {"status": "error", "message": f"Error fetching gist content: {e}"}
+                ),
+                500,
+            )
 
     return jsonify(result)
 
 
-if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=9876)
+if __name__ == "__main__":
+    app.run(debug=True, host="0.0.0.0", port=9876)
