@@ -7,10 +7,12 @@ module implements a Flask server exposing two endpoints: a simple ping
 endpoint to verify the server is up and responding and a search endpoint
 providing a search across all public Gists for a given Github account.
 """
+import re
 
 import requests
 from flask import Flask, jsonify, request
 
+from utils import gists_for_user, gist_content
 
 app = Flask(__name__)
 
@@ -19,25 +21,6 @@ app = Flask(__name__)
 def ping():
     """Provide a static response to a simple GET request."""
     return "pong"
-
-
-def gists_for_user(username: str):
-    """Provides the list of gist metadata for a given user.
-
-    This abstracts the /users/:username/gist endpoint from the Github API.
-    See https://developer.github.com/v3/gists/#list-a-users-gists for
-    more information.
-
-    Args:
-        username (string): the user to query gists for
-
-    Returns:
-        The dict parsed from the json response from the Github API.  See
-        the above URL for details of the expected structure.
-    """
-    gists_url = 'https://api.github.com/users/{username}/gists'.format(username=username)
-    response = requests.get(gists_url)
-    return response.json()
 
 
 @app.route("/api/v1/search", methods=['POST'])
@@ -57,17 +40,37 @@ def search():
     username = post_data['username']
     pattern = post_data['pattern']
 
-    result = {}
+    result = {
+        'status': 'success',
+        'username': username,
+        'pattern': pattern,
+        'matches': []
+    }
+
+    # Compile the pattern for better performance in loop
+    regex = re.compile(pattern)
+
     gists = gists_for_user(username)
+    if gists is None:
+        result['status'] = 'error'
+        result['message'] = 'Failed to fetch gists. Please check the username and try again.'
+        return jsonify(result), 400
 
     for gist in gists:
-        # TODO: Fetch each gist and check for the pattern
-        pass
+        gist_details = gist_content(gist['url'])
+        if gist_details is None:
+            continue
 
-    result['status'] = 'success'
-    result['username'] = username
-    result['pattern'] = pattern
-    result['matches'] = []
+        for filename, file_info in gist_details['files'].items():
+            file_content = requests.get(file_info['raw_url']).text
+
+            if regex.search(file_content):
+                match_info = {
+                    'gist_id': gist['id'],
+                    'filename': filename,
+                    'url': gist['html_url']
+                }
+                result['matches'].append(match_info)
 
     return jsonify(result)
 
