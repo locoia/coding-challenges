@@ -12,7 +12,7 @@ import re
 import requests
 from flask import Flask, jsonify, request
 
-from utils import gists_for_user, gist_content
+from utils import gists_for_user, gist_content, is_pattern_present
 
 app = Flask(__name__)
 
@@ -55,9 +55,6 @@ def search():
         'matches': []
     }
 
-    # Compile the pattern for better performance in loop
-    regex = re.compile(pattern)
-
     try:
         gists = gists_for_user(username)
     except requests.RequestException as e:
@@ -74,16 +71,14 @@ def search():
             if gist_details is None:
                 continue
 
-            for filename, file_info in gist_details['files'].items():
-                file_content = requests.get(file_info['raw_url']).text
-
-                if regex.search(file_content):
-                    match_info = {
-                        'gist_id': gist['id'],
-                        'filename': filename,
-                        'url': gist['html_url']
-                    }
-                    result['matches'].append(match_info)
+            for file_name, file_info in gist_details['files'].items():
+                if is_pattern_present(file_info['raw_url'], pattern):
+                    result['matches'].append({
+                        'gist_id': gist_details['id'],
+                        'gist_url': gist_details['html_url'],
+                        'file_name': file_name,
+                        'file_url': file_info['raw_url']
+                    })
         except requests.RequestException as e:
             return jsonify({'status': 'error', 'message': f'Error fetching gist content: {e}'}), 500
 
