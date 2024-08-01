@@ -108,3 +108,21 @@ class GistAPITestCase(unittest.TestCase):
             json_resp = response.get_json()
             self.assertEqual(json_resp['status'], 'success')
             self.assertEqual(len(json_resp['matches']), 0)
+
+    def test_search_missing_username(self):
+        data = {'pattern': 'import requests'}
+        response = self.app.post('/api/v1/search', json=data)
+        self.assertEqual(response.status_code, 400)
+
+        json_resp = response.get_json()
+        self.assertEqual(json_resp['status'], 'error')
+        self.assertEqual(json_resp['message'], 'Invalid or missing username')
+
+    def test_search_missing_pattern(self):
+        data = {'username': 'testuser'}
+        response = self.app.post('/api/v1/search', json=data)
+        self.assertEqual(response.status_code, 400)
+        json_resp = response.get_json()
+
+        self.assertEqual(json_resp['status'], 'error')
+        self.assertEqual(json_resp['message'], 'Invalid or missing pattern')

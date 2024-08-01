@@ -36,9 +36,17 @@ def search():
         indicating any failure conditions.
     """
     post_data = request.get_json()
+    # Validate input data
+    if not post_data:
+        return jsonify({'status': 'error', 'message': 'No data provided'}), 400
 
-    username = post_data['username']
-    pattern = post_data['pattern']
+    username = post_data.get('username')
+    pattern = post_data.get('pattern')
+    # Validate username and pattern
+    if not username or not isinstance(username, str):
+        return jsonify({'status': 'error', 'message': 'Invalid or missing username'}), 400
+    if not pattern or not isinstance(pattern, str):
+        return jsonify({'status': 'error', 'message': 'Invalid or missing pattern'}), 400
 
     result = {
         'status': 'success',
@@ -50,27 +58,34 @@ def search():
     # Compile the pattern for better performance in loop
     regex = re.compile(pattern)
 
-    gists = gists_for_user(username)
+    try:
+        gists = gists_for_user(username)
+    except requests.RequestException as e:
+        return jsonify({'status': 'error', 'message': f'Error fetching gists: {e}'}), 500
+
     if gists is None:
         result['status'] = 'error'
         result['message'] = 'Failed to fetch gists. Please check the username and try again.'
         return jsonify(result), 400
 
     for gist in gists:
-        gist_details = gist_content(gist['url'])
-        if gist_details is None:
-            continue
+        try:
+            gist_details = gist_content(gist['url'])
+            if gist_details is None:
+                continue
 
-        for filename, file_info in gist_details['files'].items():
-            file_content = requests.get(file_info['raw_url']).text
+            for filename, file_info in gist_details['files'].items():
+                file_content = requests.get(file_info['raw_url']).text
 
-            if regex.search(file_content):
-                match_info = {
-                    'gist_id': gist['id'],
-                    'filename': filename,
-                    'url': gist['html_url']
-                }
-                result['matches'].append(match_info)
+                if regex.search(file_content):
+                    match_info = {
+                        'gist_id': gist['id'],
+                        'filename': filename,
+                        'url': gist['html_url']
+                    }
+                    result['matches'].append(match_info)
+        except requests.RequestException as e:
+            return jsonify({'status': 'error', 'message': f'Error fetching gist content: {e}'}), 500
 
     return jsonify(result)
 
