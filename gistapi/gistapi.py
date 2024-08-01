@@ -8,8 +8,6 @@ endpoint to verify the server is up and responding and a search endpoint
 providing a search across all public Gists for a given Github account.
 """
 
-import re
-
 import requests
 from flask import Flask, jsonify, request
 
